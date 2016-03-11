@@ -1,0 +1,82 @@
+#!/bin/sh -
+# File is managed by Puppet
+
+### BEGIN INIT INFO
+# Provides:          build-agent
+# Required-Start:    $local_fs $syslog
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Build agent management script
+### END INIT INFO
+#set -x
+
+NAME=build-agent
+DAEMON=/opt/build-agent/bin/agent.sh
+PIDFILE=/opt/build-agent/logs/buildAgent.pid
+USER=teamcity
+
+# If the daemon is not there, then exit.
+test -x $DAEMON || exit 5
+
+log_daemon_msg() {
+  echo "$@"
+  echo "$@" >> /var/log/$NAME.log
+}
+PID=`cat $PIDFILE 2>/dev/null `
+
+case $1 in
+start)
+  if [ -e $PIDFILE ]; then
+    `/bin/kill -0 $PID 2>/dev/null `
+    service_status=$?
+    if [[ $service_status = 0 ]]; then
+      log_daemon_msg "$NAME process is already running"
+      exit
+    fi
+  fi
+
+  log_daemon_msg "Starting the process" "$NAME"
+  su --login -c "$DAEMON start" $USER || log_daemon_msg "tried to start but failed"
+;;
+stop)
+  if [ -e $PIDFILE ]; then
+    `/bin/kill -0 $PID 2>/dev/null `
+    service_status=$?
+    if [[ $service_status = 0 ]]; then
+      su --login -c "$DAEMON stop" $USER || log_daemon_msg "tried to stop but failed"
+      rm -rf $PIDFILE
+    else
+      log_daemon_msg "$NAME process is not running"
+      echo "pid file found, but process doesn't exist.  removing pid file"
+      kill -9 $PID 2>/dev/null
+      pkill -f $NAME 2>/dev/null #teamcity child process can linger
+      rm -rf $PIDFILE
+    fi
+  else
+    echo "process already stopped"
+  fi
+;;
+restart)
+  $0 stop && sleep 10 && $0 start
+  ;;
+status)
+  if [ -e $PIDFILE ]; then
+    `/bin/kill -0 $PID 2>/dev/null `
+    service_status=$?
+    if [[ $service_status = 1 ]]; then
+      echo "pid file found, but process doesn't exist.  removing pid file"
+      kill -9 $PID 2>/dev/null
+      pkill -f teamcity-agent 2>/dev/null #teamcity child process can linger
+      rm -rf $PIDFILE
+    else
+      log_daemon_msg "$NAME is running"
+    fi
+  else
+    log_daemon_msg "$NAME Process is not running"
+  fi
+;;
+*)
+  echo "Usage: $0 {start|stop|restart|service_status}"
+  exit 2
+esac

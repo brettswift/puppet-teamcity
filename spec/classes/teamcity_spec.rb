@@ -25,6 +25,9 @@ describe 'teamcity', :type => 'class' do
     context "on #{os}" do
       let(:facts) do
         facts
+        facts.merge({
+          :temp_dir => 'C:/temp',
+         })
       end
 
       context 'main class tests' do

@@ -1,7 +1,13 @@
 # PRIVATE CLASS: do not call directly
 # Class for managing system.d service
-class teamcity::agent::service::systemd {
+class teamcity::agent::service::systemd (
+  $agent_dir  = $teamcity::agent_dir,
+  $agent_user = $teamcity::agent_user,
+  ){
 
+  #Template uses these vars:
+  # agent_dir
+  # agent_user
   file { '/lib/systemd/system/build-agent.service':
     ensure  => 'file',
     owner   => 'root',

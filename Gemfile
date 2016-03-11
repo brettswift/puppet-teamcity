@@ -1,10 +1,9 @@
 source 'https://rubygems.org'
 
-puppetversion = ENV['PUPPET_VERSION'] || '~> 3.8.0'
+puppetversion = ENV['PUPPET_GEM_VERSION'] || '~> 3.8.0'
 gem 'puppet', puppetversion, :require => false
 
 gem 'metadata-json-lint'
-gem 'puppet', puppetversion
 gem 'rspec-puppet'
 gem 'rspec-puppet-utils'
 
